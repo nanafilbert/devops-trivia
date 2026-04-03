@@ -1,0 +1,12 @@
+venv/
+__pycache__/
+*.pyc
+*.pyo
+.git/
+.gitignore
+db.sqlite3
+staticfiles/
+*.env
+.env
+write_seed.py
+README.md
