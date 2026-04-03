@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+{% block title %}GAME OVER — DevOps Trivia{% endblock %}
+{% block content %}
+<canvas id="bg-canvas"></canvas>
+<div class="complete-page">
+    <div class="result-card">
+        <h1>
+            {% if session.score == session.total_questions %}
+            ★ PERFECT SCORE ★
+            {% else %}
+            ◈ GAME COMPLETE ◈
+            {% endif %}
+        </h1>
+
+        <div class="final-score">
+            <span class="score-number">{{ session.score }}</span>
+            <span class="score-total">/{{ session.total_questions }}</span>
+        </div>
+
+        <div class="result-details">
+            <div>▶ PLAYER &nbsp;&nbsp;: <strong>{{ session.username }}</strong></div>
+            <div>▶ ARENA &nbsp;&nbsp;&nbsp;: <strong>{{ session.room.name }}</strong></div>
+            <div>▶ LEVEL &nbsp;&nbsp;&nbsp;: <strong>{{ session.difficulty|upper }}</strong></div>
+            <div>▶ POINTS &nbsp;&nbsp;: <strong>{{ session.score }}0 / {{ session.total_questions }}0</strong></div>
+        </div>
+
+        <div class="result-message">
+            {% if session.score == session.total_questions %}
+                🏆 LEGENDARY! YOU ARE A DEVOPS MASTER!
+            {% elif session.score >= 8 %}
+                ⚡ EXCELLENT! STRONG KNOWLEDGE!
+            {% elif session.score >= 6 %}
+                💪 GOOD JOB! KEEP STUDYING!
+            {% elif session.score >= 4 %}
+                📚 NOT BAD! MORE PRACTICE NEEDED.
+            {% else %}
+                🔄 KEEP GRINDING. YOU WILL GET THERE!
+            {% endif %}
+        </div>
+
+        <div class="action-buttons">
+            <a href="/" class="pixel-btn secondary">🏠 HOME</a>
+            <a href="/rooms/?username={{ session.username }}" class="pixel-btn">▶ PLAY AGAIN</a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const canvas = document.getElementById('bg-canvas');
+const ctx = canvas.getContext('2d');
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+const cols = Math.floor(canvas.width / 20);
+const drops = Array(cols).fill(1);
+const chars = '01アウイエオABCDEFGHIJKLMNOPQRSTUVWXYZ';
+function drawMatrix() {
+    ctx.fillStyle = 'rgba(0,0,0,0.05)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    drops.forEach((y, i) => {
+        ctx.fillStyle = '#00ff4112';
+        ctx.font = '14px monospace';
+        ctx.fillText(chars[Math.floor(Math.random() * chars.length)], i * 20, y * 20);
+        if (y * 20 > canvas.height && Math.random() > 0.975) drops[i] = 0;
+        drops[i]++;
+    });
+}
+setInterval(drawMatrix, 60);
+</script>
+{% endblock %}

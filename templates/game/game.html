@@ -1,0 +1,135 @@
+{% extends 'base.html' %}
+{% block title %}{{ session.room.name }} — DevOps Trivia{% endblock %}
+{% block content %}
+<canvas id="bg-canvas"></canvas>
+<div class="game-page">
+    <div class="game-header">
+        <div>
+            <span class="room-name">{{ session.room.name }}</span>
+            <span class="difficulty {{ session.difficulty }}">{{ session.difficulty|upper }}</span>
+        </div>
+        <div class="game-stats">
+            <span id="question-counter">Q 1/{{ session.total_questions }}</span>
+            <span id="score-display">▓ 0 PTS</span>
+        </div>
+    </div>
+
+    <div class="question-container" id="question-container">
+        <div class="loading"><span class="blink">█</span> LOADING...</div>
+    </div>
+
+    <div class="feedback" id="feedback" style="display:none">
+        <div id="feedback-message"></div>
+        <button id="next-btn">NEXT ▶▶</button>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const canvas = document.getElementById('bg-canvas');
+const ctx = canvas.getContext('2d');
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+const cols = Math.floor(canvas.width / 20);
+const drops = Array(cols).fill(1);
+const chars = '01アウイエオABCDEFGHIJKLMNOPQRSTUVWXYZ';
+function drawMatrix() {
+    ctx.fillStyle = 'rgba(0,0,0,0.05)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    drops.forEach((y, i) => {
+        ctx.fillStyle = '#00ff4112';
+        ctx.font = '14px monospace';
+        ctx.fillText(chars[Math.floor(Math.random() * chars.length)], i * 20, y * 20);
+        if (y * 20 > canvas.height && Math.random() > 0.975) drops[i] = 0;
+        drops[i]++;
+    });
+}
+setInterval(drawMatrix, 60);
+
+const SESSION_ID = '{{ session.id }}';
+const TOTAL = {{ session.total_questions }};
+let currentQuestion = null;
+let currentOptions = {};
+let score = 0;
+
+const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+const ws = new WebSocket(`${wsProtocol}//${window.location.host}/ws/game/${SESSION_ID}/`);
+
+ws.onmessage = function(e) {
+    const data = JSON.parse(e.data);
+    if (data.type === 'answer_result') showFeedback(data);
+};
+
+async function loadQuestion() {
+    const res = await fetch(`/game/${SESSION_ID}/question/`);
+    const data = await res.json();
+    if (data.complete) { window.location.href = `/game/${SESSION_ID}/complete/`; return; }
+
+    currentQuestion = data.question;
+    currentOptions = data.question.options;
+    score = data.score || score;
+
+    document.getElementById('question-counter').textContent = `Q ${data.question_number}/${TOTAL}`;
+    document.getElementById('question-container').innerHTML = `
+        <div class="question-text">▶ ${data.question.text}</div>
+        <div class="options">
+            ${Object.entries(data.question.options).map(([key, value]) => `
+                <button class="option-btn" data-answer="${key}" onclick="submitAnswer('${key}')">
+                    <span class="option-key">${key.toUpperCase()}</span>
+                    <span>${value}</span>
+                </button>
+            `).join('')}
+        </div>
+    `;
+    document.getElementById('feedback').style.display = 'none';
+}
+
+function submitAnswer(answer) {
+    document.querySelectorAll('.option-btn').forEach(btn => btn.disabled = true);
+    ws.send(JSON.stringify({
+        type: 'answer',
+        session_id: SESSION_ID,
+        question_id: currentQuestion.id,
+        answer,
+        shuffled_correct: currentQuestion.correct
+    }));
+}
+
+function showFeedback(data) {
+    score = data.score;
+    document.getElementById('score-display').textContent = `▓ ${score * 10} PTS`;
+
+    const feedback = document.getElementById('feedback');
+    const message = document.getElementById('feedback-message');
+
+    // Look up correct answer text from locally stored options
+    const correctKey = data.correct_answer;
+    const correctText = currentOptions[correctKey] || data.correct_answer_text || '';
+
+    if (data.is_correct) {
+        feedback.className = 'feedback correct';
+        message.innerHTML = `✓ CORRECT! +10 PTS`;
+    } else {
+        feedback.className = 'feedback incorrect';
+        const key = correctKey ? correctKey.toUpperCase() : '?';
+        message.innerHTML = `✗ WRONG! ANSWER: <strong style="color:var(--green)">${key} — ${correctText}</strong>`;
+    }
+
+    document.querySelectorAll('.option-btn').forEach(btn => {
+        if (btn.dataset.answer === correctKey) btn.classList.add('correct');
+    });
+
+    feedback.style.display = 'flex';
+
+    if (data.game_complete) {
+        document.getElementById('next-btn').textContent = 'SEE RESULTS ▶▶';
+        document.getElementById('next-btn').onclick = () => window.location.href = `/game/${SESSION_ID}/complete/`;
+    } else {
+        document.getElementById('next-btn').onclick = loadQuestion;
+    }
+}
+
+loadQuestion();
+</script>
+{% endblock %}
