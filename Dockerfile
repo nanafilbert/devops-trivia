@@ -42,4 +42,4 @@ USER appuser
 EXPOSE 8000
 
 # Start with Daphne for WebSocket support
-CMD ["daphne", "-b", "0.0.0.0", "-p", "8000", "trivia.asgi:application"]
+CMD ["sh", "-c", "python manage.py migrate --noinput && python manage.py seed_questions && python manage.py seed_more_questions && daphne -b 0.0.0.0 -p 8000 trivia.asgi:application"]
