@@ -19,7 +19,7 @@ INSTALLED_APPS = [
     'channels',
     'game',
 ]
-
+### Note: If you add new apps, remember to include them in the Dockerfile for production builds! ###
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
