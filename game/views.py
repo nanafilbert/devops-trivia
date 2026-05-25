@@ -102,3 +102,10 @@ def get_question(request, session_id):
 def game_complete(request, session_id):
     session = get_object_or_404(GameSession, id=session_id)
     return render(request, 'game/complete.html', {'session': session})
+
+
+
+from django.http import JsonResponse
+
+def ready(request):
+    return JsonResponse({"status": "ok"})
