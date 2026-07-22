@@ -11,7 +11,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 # Install Python dependencies
 COPY requirements.txt .
-RUN pip install --upgrade pip && \
+RUN pip install --upgrade --no-cache-dir "pip>=26.1.2" && \
     pip install --no-cache-dir -r requirements.txt
 
 # ── Runtime stage ─────────────────────────────────────────────────────
