@@ -10,9 +10,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Python dependencies
+
+RUN python -m pip install --upgrade --no-cache-dir "pip>=26.1.2" && \
+    rm -rf /usr/share/python-wheels/pip* && \
+    find /usr/local/lib /usr/lib -name "*pip-25.0.1*" -exe
+    
 COPY requirements.txt .
-RUN pip install --upgrade --no-cache-dir "pip>=26.1.2" && \
-    pip install --no-cache-dir -r requirements.txt
+RUN  pip install --no-cache-dir -r requirements.txt
 
 # ── Runtime stage ─────────────────────────────────────────────────────
 FROM python:3.12-slim
