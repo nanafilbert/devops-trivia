@@ -11,8 +11,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 # Install Python dependencies
 COPY requirements.txt .
-RUN pip install --upgrade pip && \
-    pip install --no-cache-dir --prefer-binary -r requirements.txt
+RUN pip install --upgrade "pip>=26.1.2" \
+    pip install --no-cache-dir -r requirements.txt
 
 # ── Runtime stage ─────────────────────────────────────────────────────
 FROM python:3.12-slim
