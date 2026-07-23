@@ -13,8 +13,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 RUN python -m pip install --upgrade --no-cache-dir "pip>=26.1.2" && \
     rm -rf /usr/share/python-wheels/pip* && \
-    find /usr/local/lib /usr/lib -name "*pip-25.0.1*" -exe
-    
+    find /usr/local/lib /usr/lib -name "*pip-25.0.1*" -exec rm -rf {} +
+
 COPY requirements.txt .
 RUN  pip install --no-cache-dir -r requirements.txt
 
