@@ -3,11 +3,13 @@ FROM python:3.12-slim AS builder
 
 WORKDIR /app
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
+# Apply OS security patches then install build dependencies
+RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-recommends \
     gcc \
     libpq-dev \
     && rm -rf /var/lib/apt/lists/*
 
+# Upgrade pip to fix pip CVEs
 RUN pip install --upgrade pip
 
 COPY requirements.txt .
@@ -18,7 +20,8 @@ FROM python:3.12-slim
 
 WORKDIR /app
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
+# Apply OS security patches — fixes util-linux/libblkid CVEs that Trivy scans
+RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-recommends \
     libpq5 \
     && rm -rf /var/lib/apt/lists/*
 
