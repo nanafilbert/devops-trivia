@@ -10,7 +10,7 @@ RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-reco
     && rm -rf /var/lib/apt/lists/*
 
 # Upgrade pip to fix pip CVEs
-RUN pip install --upgrade pip setuptools msgpack
+RUN pip install --upgrade pip "setuptools>=82.0.0" "msgpack>=1.2.1"
 
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
@@ -26,7 +26,7 @@ RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-reco
     && rm -rf /var/lib/apt/lists/*
 
 # Upgrade pip in runtime stage — this is what Trivy scans
-RUN pip install --upgrade pip setuptools msgpack
+RUN pip install --upgrade pip "setuptools>=82.0.0" "msgpack>=1.2.1"
 
 # Copy installed packages from builder
 COPY --from=builder /usr/local/lib/python3.12/site-packages /usr/local/lib/python3.12/site-packages
