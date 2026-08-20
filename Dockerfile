@@ -9,28 +9,31 @@ RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-reco
     libpq-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Upgrade pip to fix pip CVEs
-RUN pip install --upgrade pip "setuptools>=83.0.0" "msgpack>=1.2.1"
-
 COPY requirements.txt .
+
+# 1. Upgrade pip, setuptools, and msgpack FIRST
+RUN pip install --no-cache-dir --upgrade pip "setuptools>=83.0.0" "msgpack>=1.2.1"
+
+# 2. Install requirements (force upgrade setuptools and msgpack if requirements.txt contains older versions)
 RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir --upgrade "setuptools>=83.0.0" "msgpack>=1.2.1"
 
 # ── Runtime stage ─────────────────────────────────────────────────────
 FROM python:3.12-slim
 
 WORKDIR /app
 
-# Apply OS security patches — fixes util-linux/libblkid CVEs that Trivy scans
+# Apply OS security patches
 RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-recommends \
     libpq5 \
     && rm -rf /var/lib/apt/lists/*
 
-# Upgrade pip in runtime stage — this is what Trivy scans
-RUN pip install --upgrade pip "setuptools>=83.0.0" "msgpack>=1.2.1"
-
 # Copy installed packages from builder
 COPY --from=builder /usr/local/lib/python3.12/site-packages /usr/local/lib/python3.12/site-packages
 COPY --from=builder /usr/local/bin /usr/local/bin
+
+# Safety check: Ensure runtime image keeps the clean patched versions after COPY
+RUN pip install --no-cache-dir --upgrade pip "setuptools>=83.0.0" "msgpack>=1.2.1"
 
 COPY . .
 
